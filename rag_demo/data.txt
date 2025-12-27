@@ -1,0 +1,3 @@
+LangChain is a framework for building LLM-powered applications.
+RAG stands for Retrieval Augmented Generation.
+Groq provides ultra-fast inference for open-source LLMs.

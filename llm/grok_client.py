@@ -9,7 +9,7 @@ client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 class LLMClient:
     @staticmethod
-    def ask(system_prompt: str, user_prompt: str) -> str:
+    def ask(system_prompt: str = None, user_prompt: str = None) -> str:
         response = client.chat.completions.create(
             model="llama-3.1-8b-instant",   # FREE + excellent
             messages=[
@@ -19,3 +19,15 @@ class LLMClient:
             temperature=0.3
         )
         return response.choices[0].message.content.strip()
+
+
+    @staticmethod
+    def get_response(prompt: str = None):
+        response = client.chat.completions.create(
+            model="llama-3.1-8b-instant",  # FREE + excellent
+            messages=[
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.3
+        )
+        return response.choices[0].message

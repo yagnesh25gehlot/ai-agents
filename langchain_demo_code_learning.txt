@@ -1,0 +1,108 @@
+pip install langchain langchain-openai langchain-anthropic
+
+
+
+"""
+Goal:
+- Send the SAME image + prompt to multiple models
+- Collect responses
+- Choose the "best" one (simple heuristic)
+
+This is a LEARNING example, not production-ready.
+"""
+
+from langchain_openai import ChatOpenAI
+from langchain_anthropic import ChatAnthropic
+from langchain.schema import HumanMessage
+import base64
+
+
+# -------------------------------
+# Utility: encode image
+# -------------------------------
+def encode_image(path: str) -> str:
+    with open(path, "rb") as f:
+        return base64.b64encode(f.read()).decode("utf-8")
+
+
+# -------------------------------
+# Initialize models
+# -------------------------------
+gpt4o = ChatOpenAI(
+    model="gpt-4o",
+    temperature=0.3,
+    api_key="OPENAI_API_KEY"
+)
+
+claude = ChatAnthropic(
+    model="claude-3-5-sonnet-20240620",
+    temperature=0.3,
+    api_key="ANTHROPIC_API_KEY"
+)
+
+
+# -------------------------------
+# Multimodal prompt
+# -------------------------------
+def critique_image(model, prompt: str, image_b64: str):
+    """
+    Sends image + text to a multimodal model
+    """
+    msg = HumanMessage(
+        content=[
+            {"type": "text", "text": prompt},
+            {
+                "type": "image_url",
+                "image_url": f"data:image/png;base64,{image_b64}"
+            }
+        ]
+    )
+
+    return model.invoke([msg]).content
+
+
+# -------------------------------
+# Simple "best answer" selector
+# -------------------------------
+def pick_best_answer(responses: dict) -> str:
+    """
+    Very naive scoring:
+    - Choose response with most words
+    (In real systems, you’d use another LLM or scoring model)
+    """
+    return max(responses.values(), key=lambda r: len(r.split()))
+
+
+# -------------------------------
+# MAIN FLOW
+# -------------------------------
+if __name__ == "__main__":
+
+    image_b64 = encode_image("chart_v1.png")
+
+    prompt = """
+    You are a data visualization expert.
+    Critique this chart and suggest improvements.
+    """
+
+    responses = {}
+
+    # Ask GPT-4o
+    responses["gpt4o"] = critique_image(
+        gpt4o, prompt, image_b64
+    )
+
+    # Ask Claude
+    responses["claude"] = critique_image(
+        claude, prompt, image_b64
+    )
+
+    # Pick best answer
+    best = pick_best_answer(responses)
+
+    print("\n--- ALL RESPONSES ---")
+    for k, v in responses.items():
+        print(f"\n[{k.upper()}]\n{v}")
+
+    print("\n--- BEST SELECTED RESPONSE ---")
+    print(best)

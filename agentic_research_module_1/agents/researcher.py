@@ -1,5 +1,5 @@
 from llm.chatgpt_client import ChatGPTClient
-from llm.llm_client import LLMClient
+from llm.grok_client import LLMClient
 
 
 class ResearchAgent:
